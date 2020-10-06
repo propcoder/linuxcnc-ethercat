@@ -1,0 +1,4 @@
+loadusr -W /usr/share/linuxcnc/lcec_conf /usr/share/linuxcnc/ethercat-conf.xml
+loadrt lcec
+addf lcec.read-all servo-thread
+addf lcec.write-all servo-thread
