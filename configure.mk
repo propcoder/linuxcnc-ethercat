@@ -1,3 +1,6 @@
+# We let this file know where halcompile is. In our case linuxcnc is in the /opt/linuxcnc direcory.
+COMP=/opt/linuxcnc/bin/halcompile 
+
 ifeq (, $(COMP))
   COMP = $(shell which halcompile)
 endif
