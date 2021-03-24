@@ -1,4 +1,4 @@
-include ../config.mk
+include ../configure.mk
 
 SUBDIRS = generic-complex swm-fm45a
 
