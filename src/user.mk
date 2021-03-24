@@ -1,4 +1,4 @@
-include ../config.mk
+include ../configure.mk
 
 EXTRA_CFLAGS := $(filter-out -Wframe-larger-than=%,$(EXTRA_CFLAGS))
 
