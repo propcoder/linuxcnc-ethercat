@@ -1,4 +1,4 @@
--include ../config.mk
+-include ../configure.mk
 
 .PHONY: all install clean
 
