@@ -5,7 +5,7 @@ all: configure
 
 clean:
 	@$(MAKE) -C src clean
-	rm -f config.mk config.mk.tmp
+	# rm -f config.mk config.mk.tmp
 
 install: configure
 	@$(MAKE) -C src install
