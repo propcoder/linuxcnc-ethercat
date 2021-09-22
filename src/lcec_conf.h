@@ -149,6 +149,7 @@ typedef enum {
   lcecSlaveTypeEL1904,
   lcecSlaveTypeEL2904,
   lcecSlaveTypeEM7004,
+  lcecSlaveTypeNCTTTLAC2,
   lcecSlaveTypeStMDS5k,
   lcecSlaveTypeDeASDA,
   lcecSlaveTypeOmrG5,

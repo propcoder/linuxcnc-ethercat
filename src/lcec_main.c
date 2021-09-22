@@ -45,6 +45,7 @@
 #include "lcec_el7342.h"
 #include "lcec_el95xx.h"
 #include "lcec_em7004.h"
+#include "lcec_nctttlac2.h"
 #include "lcec_stmds5k.h"
 #include "lcec_deasda.h"
 #include "lcec_omrg5.h"
@@ -195,6 +196,9 @@ static const lcec_typelist_t types[] = {
 
   // multi axis interface
   { lcecSlaveTypeEM7004, LCEC_EM7004_VID, LCEC_EM7004_PID, LCEC_EM7004_PDOS, lcec_em7004_init},
+
+  // NCT 2x encoder inputs, 2x analog outputs, 2x tacho outputs
+  { lcecSlaveTypeNCTTTLAC2, LCEC_NCT_VID, LCEC_NCTTTLAC2_PID, LCEC_NCTTTLAC2_PDOS, lcec_nctttlac2_init},
 
   // stoeber MDS5000 series
   { lcecSlaveTypeStMDS5k, LCEC_STMDS5K_VID, LCEC_STMDS5K_PID, LCEC_STMDS5K_PDOS, lcec_stmds5k_init},

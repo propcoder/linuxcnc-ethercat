@@ -197,6 +197,9 @@ static const LCEC_CONF_TYPELIST_T slaveTypes[] = {
 
   // multi axis interface
   { "EM7004", lcecSlaveTypeEM7004, NULL },
+  
+  // NCT 2x encoder inputs, 2x analog outputs, 2x tacho outputs
+  { "NCTTTLAC2", lcecSlaveTypeNCTTTLAC2, NULL },
 
   // stoeber MDS5000 series
   { "StMDS5k", lcecSlaveTypeStMDS5k, slaveStMDS5kParams },
