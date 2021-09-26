@@ -69,14 +69,14 @@ typedef struct {
 
 static const lcec_pindesc_t slave_pins[] = {
   { HAL_BIT, HAL_IO, offsetof(lcec_el5021_data_t, index_enable), "%s.%s.%s.index-enable" },
-  { HAL_BIT, HAL_OUT, offsetof(lcec_el5021_data_t, input_c_status), "%s.%s.%s.input_c_status" },
-  { HAL_BIT, HAL_OUT, offsetof(lcec_el5021_data_t, sync_error), "%s.%s.%s.sync_error" },
-  { HAL_BIT, HAL_OUT, offsetof(lcec_el5021_data_t, txpdo_error), "%s.%s.%s.txpdo_error" },
-  { HAL_BIT, HAL_OUT, offsetof(lcec_el5021_data_t, txpdo_state), "%s.%s.%s.txpdo_state" },
+  { HAL_BIT, HAL_OUT, offsetof(lcec_el5021_data_t, input_c_status), "%s.%s.%s.input-c-status" },
+  { HAL_BIT, HAL_OUT, offsetof(lcec_el5021_data_t, sync_error), "%s.%s.%s.sync-error" },
+  { HAL_BIT, HAL_OUT, offsetof(lcec_el5021_data_t, txpdo_error), "%s.%s.%s.txpdo-error" },
+  { HAL_BIT, HAL_OUT, offsetof(lcec_el5021_data_t, txpdo_state), "%s.%s.%s.txpdo-state" },
   { HAL_S32, HAL_OUT, offsetof(lcec_el5021_data_t, count), "%s.%s.%s.count" },
   { HAL_S32, HAL_OUT, offsetof(lcec_el5021_data_t, latch), "%s.%s.%s.latch" },
-  { HAL_BIT, HAL_OUT, offsetof(lcec_el5021_data_t, frequency_error), "%s.%s.%s.frequency_error" },
-  { HAL_BIT, HAL_OUT, offsetof(lcec_el5021_data_t, amplitude_error), "%s.%s.%s.amplitude_error" },
+  { HAL_BIT, HAL_OUT, offsetof(lcec_el5021_data_t, frequency_error), "%s.%s.%s.frequency-error" },
+  { HAL_BIT, HAL_OUT, offsetof(lcec_el5021_data_t, amplitude_error), "%s.%s.%s.amplitude-error" },
   { HAL_FLOAT, HAL_OUT, offsetof(lcec_el5021_data_t, pos), "%s.%s.%s.pos" },
   { HAL_FLOAT, HAL_IN, offsetof(lcec_el5021_data_t, pos_scale), "%s.%s.%s.pos-scale" },
   { HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL }
