@@ -24,7 +24,7 @@
 #define LCEC_EL5021_VID LCEC_BECKHOFF_VID
 #define LCEC_EL5021_PID 0x139d3052
 
-#define LCEC_EL5021_PDOS 18
+#define LCEC_EL5021_PDOS 13
 
 int lcec_el5021_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_reg_t *pdo_entry_regs);
 
