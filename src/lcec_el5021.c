@@ -86,6 +86,8 @@ static ec_pdo_entry_info_t lcec_el5021_in[] = {
    {0x6000, 0x01,  1}, // Latch C valid
    {0x0000, 0x00,  1}, // Gap
    {0x6000, 0x03,  1}, // Set counter done
+   {0x6001, 0x04,  1}, // Frequency error
+   {0x6001, 0x05,  1}, // Amplitude error
    {0x0000, 0x00,  5}, // Gap
    {0x6000, 0x0b,  1}, // Status of input C
    {0x0000, 0x00,  2}, // Gap
@@ -94,8 +96,6 @@ static ec_pdo_entry_info_t lcec_el5021_in[] = {
    {0x6000, 0x10,  1}, // TxPDO State
    {0x6000, 0x11, 32}, // Counter value
    {0x6000, 0x12, 32}, // Latch value
-   {0x6001, 0x04,  1}, // Frequency error
-   {0x6001, 0x05,  1}, // Amplitude error
 };
 
 static ec_pdo_entry_info_t lcec_el5021_out[] = {
@@ -187,7 +187,6 @@ void lcec_el5021_read(struct lcec_slave *slave, long period) {
   uint8_t *pd = master->process_data;
   uint8_t raw_status;
   int32_t raw_count, raw_latch, raw_delta;
-  uint32_t raw_frequency;
 
   // wait for slave to be operational
   if (!slave->state.operational) {
