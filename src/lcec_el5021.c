@@ -23,42 +23,40 @@
 typedef struct {
   hal_bit_t *index_enable;
   hal_bit_t *set_counter_done;
+  hal_bit_t *frequency_error, *amplitude_error;
   hal_bit_t *input_c_status;
   hal_bit_t *sync_error, *txpdo_error, *txpdo_state;
   hal_s32_t *count, *latch;
-  hal_bit_t *frequency_error;
-  hal_bit_t *amplitude_error;
   hal_float_t *pos, *pos_scale;
   hal_bit_t *set_counter;
 
   unsigned int latch_c_valid_pdo_os;
   unsigned int set_counter_done_pdo_os;
+  unsigned int frequency_error_pdo_os;
+  unsigned int amplitude_error_pdo_os;
   unsigned int input_c_status_pdo_os;
   unsigned int sync_error_pdo_os;
   unsigned int txpdo_error_pdo_os;
   unsigned int txpdo_state_pdo_os;
   unsigned int count_pdo_os;
   unsigned int latch_value_pdo_os;
-  unsigned int frequency_error_pdo_os;
-  unsigned int amplitude_error_pdo_os;
+  unsigned int enable_latch_c_pdo_os;
   unsigned int set_counter_pdo_os;
   unsigned int set_counter_value_pdo_os;
-  unsigned int enable_latch_c_pdo_os;
   
   unsigned int latch_c_valid_bitp;
   unsigned int set_counter_done_bitp;
+  unsigned int frequency_error_bitp;
+  unsigned int amplitude_error_bitp;
   unsigned int input_c_status_bitp;
   unsigned int sync_error_bitp;
   unsigned int txpdo_error_bitp;
   unsigned int txpdo_state_bitp;
   unsigned int count_bitp;
   unsigned int latch_value_bitp;
-  unsigned int frequency_error_bitp;
-  unsigned int amplitude_error_bitp;
+  unsigned int enable_latch_c_bitp;
   unsigned int set_counter_bitp;
   unsigned int set_counter_value_bitp;
-  unsigned int enable_latch_c_bitp;
-  
   
   int do_init;
   int32_t last_count;
@@ -150,19 +148,19 @@ int lcec_el5021_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_reg_t *
 
   // initialize PDO entries
   LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6000, 0x01, &hal_data->latch_c_valid_pdo_os, &hal_data->latch_c_valid_bitp);
-//   LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6000, 0x03, &hal_data->set_counter_done_pdo_os, &hal_data->set_counter_done_bitp);
+  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6000, 0x03, &hal_data->set_counter_done_pdo_os, &hal_data->set_counter_done_bitp);
+  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6001, 0x04, &hal_data->frequency_error_pdo_os, &hal_data->frequency_error_bitp);
+  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6001, 0x05, &hal_data->amplitude_error_pdo_os, &hal_data->amplitude_error_bitp);
   LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6000, 0x0b, &hal_data->input_c_status_pdo_os, &hal_data->input_c_status_bitp);
   LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6000, 0x0e, &hal_data->sync_error_pdo_os, &hal_data->sync_error_bitp);
   LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6000, 0x0f, &hal_data->txpdo_error_pdo_os, &hal_data->txpdo_error_bitp);
   LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6000, 0x10, &hal_data->txpdo_state_pdo_os, &hal_data->txpdo_state_bitp);
   LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6000, 0x11, &hal_data->count_pdo_os, &hal_data->count_bitp);
   LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6000, 0x12, &hal_data->latch_value_pdo_os, &hal_data->latch_value_bitp);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6001, 0x04, &hal_data->frequency_error_pdo_os, &hal_data->frequency_error_bitp);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6001, 0x05, &hal_data->amplitude_error_pdo_os, &hal_data->amplitude_error_bitp);
   
   LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x7000, 0x01, &hal_data->enable_latch_c_pdo_os, &hal_data->enable_latch_c_bitp);
-//   LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x7000, 0x03, &hal_data->set_counter_pdo_os, &hal_data->set_counter_bitp);
-//   LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x7000, 0x11, &hal_data->set_counter_value_pdo_os, &hal_data->set_counter_value_bitp);
+  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x7000, 0x03, &hal_data->set_counter_pdo_os, &hal_data->set_counter_bitp);
+  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x7000, 0x11, &hal_data->set_counter_value_pdo_os, &hal_data->set_counter_value_bitp);
 
   // export pins
   if ((err = lcec_pin_newf_list(hal_data, slave_pins, LCEC_MODULE_NAME, master->name, slave->name)) != 0) {
@@ -208,12 +206,12 @@ void lcec_el5021_read(struct lcec_slave *slave, long period) {
   }
 
   // get bit states
-  *(hal_data->input_c_status) = EC_READ_BIT(&pd[hal_data->input_c_status_pdo_os], hal_data->input_c_status_bitp);
+  *(hal_data->frequency_error) = EC_READ_BIT(&pd[hal_data->frequency_error_pdo_os], hal_data->frequency_error_bitp);
+  *(hal_data->amplitude_error) = EC_READ_BIT(&pd[hal_data->amplitude_error_pdo_os], hal_data->amplitude_error_bitp);
+  *(hal_data->input_c_status) = EC_READ_BIT(&pd[hal_data->input_c_status_pdo_os], hal_data->input_c_status_bitp);  
   *(hal_data->sync_error) = EC_READ_BIT(&pd[hal_data->sync_error_pdo_os], hal_data->sync_error_bitp);
   *(hal_data->txpdo_error) = EC_READ_BIT(&pd[hal_data->txpdo_error_pdo_os], hal_data->txpdo_error_bitp);
   *(hal_data->txpdo_state) = EC_READ_BIT(&pd[hal_data->txpdo_state_pdo_os], hal_data->txpdo_state_bitp);
-  *(hal_data->frequency_error) = EC_READ_BIT(&pd[hal_data->frequency_error_pdo_os], hal_data->frequency_error_bitp);
-  *(hal_data->amplitude_error) = EC_READ_BIT(&pd[hal_data->amplitude_error_pdo_os], hal_data->amplitude_error_bitp);
 
   // read raw values
   raw_count = EC_READ_S32(&pd[hal_data->count_pdo_os]);
