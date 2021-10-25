@@ -68,7 +68,7 @@ static const lcec_pindesc_t slave_pins[] = {
   { HAL_FLOAT, HAL_IO, offsetof(lcec_nctttlac2_chan_t, pos_scale), "%s.%s.%s.%d.enc-pos-scale" },
   { HAL_FLOAT, HAL_IO, offsetof(lcec_nctttlac2_chan_t, vel_scale), "%s.%s.%s.%d.vel-scale" },
   { HAL_FLOAT, HAL_IN, offsetof(lcec_nctttlac2_chan_t, vel_cmd), "%s.%s.%s.%d.vel-cmd" },
-  { HAL_BIT, HAL_IN, offsetof(lcec_nctttlac2_chan_t, index_enable), "%s.%s.%s.%d.index-enable" },
+  { HAL_BIT, HAL_IO, offsetof(lcec_nctttlac2_chan_t, index_enable), "%s.%s.%s.%d.index-enable" },
   { HAL_U32, HAL_IO, offsetof(lcec_nctttlac2_chan_t, index_pulse_position), "%s.%s.%s.%d.index-pulse-position" },
   { HAL_BIT, HAL_IN, offsetof(lcec_nctttlac2_chan_t, fault_reset), "%s.%s.%s.%d.fault-reset" },
   { HAL_U32, HAL_IN, offsetof(lcec_nctttlac2_chan_t, message_code), "%s.%s.%s.%d.message-code" },
