@@ -32,6 +32,7 @@ lcec-objs := \
     lcec_em7004.o \
     lcec_ncti16.o \
     lcec_ncti32.o \
+    lcec_nctmk1x.o \
     lcec_nctttlac2.o \
     lcec_stmds5k.o \
     lcec_deasda.o \

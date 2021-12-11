@@ -153,6 +153,7 @@ typedef enum {
   lcecSlaveTypeNCTI16,
   lcecSlaveTypeNCTI32,
   lcecSlaveTypeNCTI32CS,
+  lcecSlaveTypeNCTMK1x,
   lcecSlaveTypeNCTTTLAC2,
   lcecSlaveTypeStMDS5k,
   lcecSlaveTypeDeASDA,

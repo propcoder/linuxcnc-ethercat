@@ -204,6 +204,9 @@ static const LCEC_CONF_TYPELIST_T slaveTypes[] = {
   { "NCTI32", lcecSlaveTypeNCTI32, NULL },
   { "NCTI32CS", lcecSlaveTypeNCTI32CS, NULL },
   
+  // NCT Machine operator panel MK19-MK15-VMK15
+  { "NCTMK1x", lcecSlaveTypeNCTMK1x, NULL },
+  
   // NCT 2x encoder inputs, 2x analog outputs, 2x tacho outputs
   { "NCTTTLAC2", lcecSlaveTypeNCTTTLAC2, NULL },
 
