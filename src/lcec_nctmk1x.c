@@ -140,15 +140,15 @@ typedef struct {
     *program_test,
     *motion_enable, *motion_enabled, *motion_inhibit,
     *dry_run,
-    *block_restart,
-    *block_return,
+    *block_restart_is_on, *block_restart_on, *block_restart_off,
+    *block_return_is_on, *block_return_on, *block_return_off,
     *optional_stop_is_on, *optional_stop_on, *optional_stop_off,
     *block_delete_is_on, *block_delete_on, *block_delete_off,
     *step,
     *machine_on, *machine_off, *machine_is_on,
     *fork_ccw, *fork_is_ccw, *fork_cw, *fork_is_cw, 
     *tool_release, *tool_released, *tool_clamp, *tool_clamped,
-    *s_gear1, *s_gear2, *gear2_is_on,
+    *s_gear1, *s_gear2, *s_gear2_is_on,
     *lube, *lube_is_on,
     *flood_on, *flood_off, *flood_is_on,
     *reset, *clear_faults, *key_switch;
@@ -194,8 +194,12 @@ static const lcec_pindesc_t slave_pins[] = {
   { HAL_BIT, HAL_IN, offsetof(lcec_nctmk1x_data_t, motion_enabled), "%s.%s.%s.motion-enabled" },
   { HAL_BIT, HAL_OUT, offsetof(lcec_nctmk1x_data_t, motion_inhibit), "%s.%s.%s.motion-inhibit" },
   { HAL_BIT, HAL_OUT, offsetof(lcec_nctmk1x_data_t, dry_run), "%s.%s.%s.dry-run" },
-  { HAL_BIT, HAL_OUT, offsetof(lcec_nctmk1x_data_t, block_restart), "%s.%s.%s.block-restart" },
-  { HAL_BIT, HAL_OUT, offsetof(lcec_nctmk1x_data_t, block_return), "%s.%s.%s.block-return" },
+  { HAL_BIT, HAL_IN, offsetof(lcec_nctmk1x_data_t, block_restart_is_on), "%s.%s.%s.block-restart-is-on" },
+  { HAL_BIT, HAL_OUT, offsetof(lcec_nctmk1x_data_t, block_restart_on), "%s.%s.%s.block-restart-on" },
+  { HAL_BIT, HAL_OUT, offsetof(lcec_nctmk1x_data_t, block_restart_off), "%s.%s.%s.block-restart-off" },
+  { HAL_BIT, HAL_IN, offsetof(lcec_nctmk1x_data_t, block_return_is_on), "%s.%s.%s.block-return-is-on" },
+  { HAL_BIT, HAL_OUT, offsetof(lcec_nctmk1x_data_t, block_return_on), "%s.%s.%s.block-return-on" },
+  { HAL_BIT, HAL_OUT, offsetof(lcec_nctmk1x_data_t, block_return_off), "%s.%s.%s.block-return-off" },
   { HAL_BIT, HAL_IN, offsetof(lcec_nctmk1x_data_t, optional_stop_is_on), "%s.%s.%s.optional-stop-is-on" },
   { HAL_BIT, HAL_OUT, offsetof(lcec_nctmk1x_data_t, optional_stop_on), "%s.%s.%s.optional-stop-on" },
   { HAL_BIT, HAL_OUT, offsetof(lcec_nctmk1x_data_t, optional_stop_off), "%s.%s.%s.optional-stop-off" },
@@ -227,7 +231,7 @@ static const lcec_pindesc_t slave_pins[] = {
   { HAL_BIT, HAL_IN, offsetof(lcec_nctmk1x_data_t, tool_clamped), "%s.%s.%s.tool-clamped" },
   { HAL_BIT, HAL_OUT, offsetof(lcec_nctmk1x_data_t, s_gear1), "%s.%s.%s.s-gear1" },
   { HAL_BIT, HAL_OUT, offsetof(lcec_nctmk1x_data_t, s_gear2), "%s.%s.%s.s-gear2" },
-  { HAL_BIT, HAL_IN, offsetof(lcec_nctmk1x_data_t, gear2_is_on), "%s.%s.%s.gear2_is_on" },
+  { HAL_BIT, HAL_IN, offsetof(lcec_nctmk1x_data_t, s_gear2_is_on), "%s.%s.%s.s-gear2-is-on" },
   { HAL_BIT, HAL_OUT, offsetof(lcec_nctmk1x_data_t, lube), "%s.%s.%s.lube" },
   { HAL_BIT, HAL_IN, offsetof(lcec_nctmk1x_data_t, lube_is_on), "%s.%s.%s.lube-is-on" },
   { HAL_BIT, HAL_OUT, offsetof(lcec_nctmk1x_data_t, flood_on), "%s.%s.%s.flood-on" },
@@ -445,6 +449,7 @@ void lcec_nctmk1x_read(struct lcec_slave *slave, long period) {
           *hal_data->jog_mode       = true;
           break;
         case M_INCR:
+        case M_INCR | M_JOG:
           *hal_data->incr_mode      = true;
           break;
         case M_HW:
@@ -454,13 +459,13 @@ void lcec_nctmk1x_read(struct lcec_slave *slave, long period) {
     *hal_data->edit = k.f.edit;
     k.f.jog_btns &= *hal_data->jog_mask;
     if(*hal_data->incr_mode) {
-      *hal_data->axes[0].jog_minus  = 0;
-      *hal_data->axes[3].jog_plus   = 0;
-      *hal_data->axes[0].jog_plus   = 0;
-      *hal_data->axes[1].jog_minus  = 0;
-      *hal_data->axes[1].jog_plus   = 0;
-      *hal_data->axes[2].jog_minus  = 0;
-      *hal_data->axes[3].jog_minus  = 0;
+      *hal_data->axes[0].jog_minus  =
+      *hal_data->axes[3].jog_plus   =
+      *hal_data->axes[0].jog_plus   =
+      *hal_data->axes[1].jog_minus  =
+      *hal_data->axes[1].jog_plus   =
+      *hal_data->axes[2].jog_minus  =
+      *hal_data->axes[3].jog_minus  =
       *hal_data->axes[2].jog_plus   = 0;
       *hal_data->axes[0].incr_minus = k.f.jog.x_minus;
       *hal_data->axes[3].incr_plus  = k.f.jog.a_plus;
@@ -471,14 +476,14 @@ void lcec_nctmk1x_read(struct lcec_slave *slave, long period) {
       *hal_data->axes[3].incr_minus = k.f.jog.a_minus;
       *hal_data->axes[2].incr_plus  = k.f.jog.z_plus;
     }
-    else {
-      *hal_data->axes[0].incr_minus = 0;
-      *hal_data->axes[3].incr_plus  = 0;
-      *hal_data->axes[0].incr_plus  = 0;
-      *hal_data->axes[1].incr_minus = 0;
-      *hal_data->axes[1].incr_plus  = 0;
-      *hal_data->axes[2].incr_minus = 0;
-      *hal_data->axes[3].incr_minus = 0;
+    else if(*hal_data->jog_mode) {
+      *hal_data->axes[0].incr_minus =
+      *hal_data->axes[3].incr_plus  =
+      *hal_data->axes[0].incr_plus  =
+      *hal_data->axes[1].incr_minus =
+      *hal_data->axes[1].incr_plus  =
+      *hal_data->axes[2].incr_minus =
+      *hal_data->axes[3].incr_minus =
       *hal_data->axes[2].incr_plus  = 0;
       *hal_data->axes[0].jog_minus  = k.f.jog.x_minus;
       *hal_data->axes[3].jog_plus   = k.f.jog.a_plus;
@@ -488,14 +493,35 @@ void lcec_nctmk1x_read(struct lcec_slave *slave, long period) {
       *hal_data->axes[2].jog_minus  = k.f.jog.z_minus;
       *hal_data->axes[3].jog_minus  = k.f.jog.a_minus;
       *hal_data->axes[2].jog_plus   = k.f.jog.z_plus;
+    } else {
+      *hal_data->axes[0].jog_minus  =
+      *hal_data->axes[3].jog_plus   =
+      *hal_data->axes[0].jog_plus   =
+      *hal_data->axes[1].jog_minus  =
+      *hal_data->axes[1].jog_plus   =
+      *hal_data->axes[2].jog_minus  =
+      *hal_data->axes[3].jog_minus  =
+      *hal_data->axes[2].jog_plus   =
+      *hal_data->axes[0].incr_minus =
+      *hal_data->axes[3].incr_plus  =
+      *hal_data->axes[0].incr_plus  =
+      *hal_data->axes[1].incr_minus =
+      *hal_data->axes[1].incr_plus  =
+      *hal_data->axes[2].incr_minus =
+      *hal_data->axes[3].incr_minus =
+      *hal_data->axes[2].incr_plus  = 0;
     }
     *hal_data->ref_point      = k.f.ref_point;
     *hal_data->program_test   = k.f.program_test;
     *hal_data->motion_enable  ^= k.f.motion_enable;
     *hal_data->motion_inhibit = !*hal_data->motion_enable;
     *hal_data->dry_run        = k.f.dry_run;
-    *hal_data->block_restart  = k.f.block_restart;
-    *hal_data->block_return   = k.f.block_return;
+    b = k.f.block_restart;
+    *hal_data->block_restart_on = !*hal_data->block_restart_is_on && b;
+    *hal_data->block_restart_off = *hal_data->block_restart_is_on && b;
+    b = k.f.block_return;
+    *hal_data->block_return_on = !*hal_data->block_return_is_on && b;
+    *hal_data->block_return_off = *hal_data->block_return_is_on && b;
     b = k.f.optional_stop;
     *hal_data->optional_stop_on = !*hal_data->optional_stop_is_on && b;
     *hal_data->optional_stop_off = *hal_data->optional_stop_is_on && b;
@@ -579,8 +605,8 @@ void lcec_nctmk1x_write(struct lcec_slave *slave, long period) {
 //   hal_data->leds.f.program_test    = *hal_data->program_test;
   hal_data->leds.f.motion_enable   = *hal_data->motion_enable;
 //   hal_data->leds.f.dry_run         = *hal_data->dry_run;
-//   hal_data->leds.f.block_restart   = *hal_data->block_restart;
-//   hal_data->leds.f.block_return    = *hal_data->block_return;
+  hal_data->leds.f.block_restart   = *hal_data->block_restart_is_on;
+  hal_data->leds.f.block_return    = *hal_data->block_return_is_on;
   hal_data->leds.f.optional_stop   = *hal_data->optional_stop_is_on;
   hal_data->leds.f.block_delete    = *hal_data->block_delete_is_on;
   hal_data->leds.f.step            = *hal_data->running;
@@ -601,7 +627,7 @@ void lcec_nctmk1x_write(struct lcec_slave *slave, long period) {
   hal_data->leds.f.machine_on      = *hal_data->machine_is_on;
   hal_data->leds.f.fork_ccw        = *hal_data->fork_is_ccw;
   hal_data->leds.f.tool_release    = *hal_data->tool_released;
-  hal_data->leds.f.s_gear          = *hal_data->gear2_is_on;
+  hal_data->leds.f.s_gear          = *hal_data->s_gear2_is_on;
   hal_data->leds.f.lube            = *hal_data->lube_is_on;
   hal_data->leds.f.fork_cw         = *hal_data->fork_is_cw;
   hal_data->leds.f.tool_clamp      = *hal_data->tool_clamped;
