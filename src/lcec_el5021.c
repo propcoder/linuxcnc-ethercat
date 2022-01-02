@@ -23,7 +23,7 @@
 typedef struct {
   hal_bit_t *index_enable;
   hal_bit_t *set_counter_done;
-  hal_bit_t *frequency_error, *amplitude_error;
+  hal_bit_t *frequency_error, *amplitude_error, *fault;
   hal_bit_t *input_c_status;
   hal_bit_t *sync_error, *txpdo_error, *txpdo_state;
   hal_s32_t *count, *latch;
@@ -75,6 +75,7 @@ static const lcec_pindesc_t slave_pins[] = {
   { HAL_S32, HAL_OUT, offsetof(lcec_el5021_data_t, latch), "%s.%s.%s.latch" },
   { HAL_BIT, HAL_OUT, offsetof(lcec_el5021_data_t, frequency_error), "%s.%s.%s.frequency-error" },
   { HAL_BIT, HAL_OUT, offsetof(lcec_el5021_data_t, amplitude_error), "%s.%s.%s.amplitude-error" },
+  { HAL_BIT, HAL_OUT, offsetof(lcec_el5021_data_t, fault), "%s.%s.%s.fault" },
   { HAL_FLOAT, HAL_OUT, offsetof(lcec_el5021_data_t, pos), "%s.%s.%s.pos" },
   { HAL_FLOAT, HAL_IN, offsetof(lcec_el5021_data_t, pos_scale), "%s.%s.%s.pos-scale" },
   { HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL }
@@ -144,7 +145,7 @@ int lcec_el5021_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_reg_t *
   slave->sync_info = lcec_el5021_syncs;
 
   // initialize global data
-  hal_data->last_operational = 0;
+  hal_data->last_operational = false;
 
   // initialize PDO entries
   LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6000, 0x01, &hal_data->latch_c_valid_pdo_os, &hal_data->latch_c_valid_bitp);
@@ -163,7 +164,7 @@ int lcec_el5021_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_reg_t *
   LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x7000, 0x11, &hal_data->set_counter_value_pdo_os, &hal_data->set_counter_value_bitp);
 
   // export pins
-  if ((err = lcec_pin_newf_list(hal_data, slave_pins, LCEC_MODULE_NAME, master->name, slave->name)) != 0) {
+  if (err = lcec_pin_newf_list(hal_data, slave_pins, LCEC_MODULE_NAME, master->name, slave->name)) {
     return err;
   }
 
@@ -171,7 +172,7 @@ int lcec_el5021_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_reg_t *
   *(hal_data->pos_scale) = 1.0;
 
   // initialize variables
-  hal_data->do_init = 1;
+  hal_data->do_init = true;
   hal_data->last_count = 0;
   hal_data->old_scale = *(hal_data->pos_scale) + 1.0;
   hal_data->scale = 1.0;
@@ -188,7 +189,8 @@ void lcec_el5021_read(struct lcec_slave *slave, long period) {
 
   // wait for slave to be operational
   if (!slave->state.operational) {
-    hal_data->last_operational = 0;
+    *hal_data->fault = true;
+    hal_data->last_operational = false;
     return;
   }
 
@@ -206,12 +208,16 @@ void lcec_el5021_read(struct lcec_slave *slave, long period) {
   }
 
   // get bit states
-  *(hal_data->frequency_error) = EC_READ_BIT(&pd[hal_data->frequency_error_pdo_os], hal_data->frequency_error_bitp);
-  *(hal_data->amplitude_error) = EC_READ_BIT(&pd[hal_data->amplitude_error_pdo_os], hal_data->amplitude_error_bitp);
-  *(hal_data->input_c_status) = EC_READ_BIT(&pd[hal_data->input_c_status_pdo_os], hal_data->input_c_status_bitp);  
-  *(hal_data->sync_error) = EC_READ_BIT(&pd[hal_data->sync_error_pdo_os], hal_data->sync_error_bitp);
-  *(hal_data->txpdo_error) = EC_READ_BIT(&pd[hal_data->txpdo_error_pdo_os], hal_data->txpdo_error_bitp);
-  *(hal_data->txpdo_state) = EC_READ_BIT(&pd[hal_data->txpdo_state_pdo_os], hal_data->txpdo_state_bitp);
+  *hal_data->frequency_error = EC_READ_BIT(&pd[hal_data->frequency_error_pdo_os], hal_data->frequency_error_bitp);
+  *hal_data->amplitude_error = EC_READ_BIT(&pd[hal_data->amplitude_error_pdo_os], hal_data->amplitude_error_bitp);
+  *hal_data->input_c_status = EC_READ_BIT(&pd[hal_data->input_c_status_pdo_os], hal_data->input_c_status_bitp);  
+  *hal_data->sync_error = EC_READ_BIT(&pd[hal_data->sync_error_pdo_os], hal_data->sync_error_bitp);
+  *hal_data->txpdo_error = EC_READ_BIT(&pd[hal_data->txpdo_error_pdo_os], hal_data->txpdo_error_bitp);
+  *hal_data->txpdo_state = EC_READ_BIT(&pd[hal_data->txpdo_state_pdo_os], hal_data->txpdo_state_bitp);
+  
+
+  *hal_data->fault = !slave->state.operational || *hal_data->frequency_error 
+      || *hal_data->amplitude_error || *hal_data->sync_error || *hal_data->txpdo_error;
 
   // read raw values
   raw_count = EC_READ_S32(&pd[hal_data->count_pdo_os]);
@@ -224,7 +230,7 @@ void lcec_el5021_read(struct lcec_slave *slave, long period) {
 
   // handle initialization
   if (hal_data->do_init) {
-    hal_data->do_init = 0;
+    hal_data->do_init = false;
     hal_data->last_count = raw_count;
     *(hal_data->count) = 0;
   }
@@ -233,7 +239,7 @@ void lcec_el5021_read(struct lcec_slave *slave, long period) {
   if (EC_READ_BIT(&pd[hal_data->latch_c_valid_pdo_os], hal_data->latch_c_valid_bitp)) {
     hal_data->last_count = raw_latch;
     *(hal_data->count) = 0;
-    *(hal_data->index_enable) = 0;
+    *(hal_data->index_enable) = false;
   }
 
   // compute net counts
@@ -244,7 +250,7 @@ void lcec_el5021_read(struct lcec_slave *slave, long period) {
   // scale count to make floating point position
   *(hal_data->pos) = *(hal_data->count) * hal_data->scale;
 
-  hal_data->last_operational = 1;
+  hal_data->last_operational = true;
 }
 
 void lcec_el5021_write(struct lcec_slave *slave, long period) {
