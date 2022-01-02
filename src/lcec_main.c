@@ -48,6 +48,7 @@
 #include "lcec_em7004.h"
 #include "lcec_ncti16.h"
 #include "lcec_ncti32.h"
+#include "lcec_nctmk1x.h"
 #include "lcec_nctttlac2.h"
 #include "lcec_stmds5k.h"
 #include "lcec_deasda.h"
@@ -206,6 +207,9 @@ static const lcec_typelist_t types[] = {
   { lcecSlaveTypeNCTI32, LCEC_NCT_VID, LCEC_NCTI32_PID, LCEC_NCTI32_PDOS, lcec_ncti32_init},
   { lcecSlaveTypeNCTI32CS, LCEC_NCT_VID, LCEC_NCTI32CS_PID, LCEC_NCTI32CS_PDOS, lcec_ncti32_init},
 
+  // NCT Machine operator panel MK19-MK15-VMK15
+  { lcecSlaveTypeNCTMK1x, LCEC_NCT_VID, LCEC_NCTMK1X_PID, LCEC_NCTMK1X_PDOS, lcec_nctmk1x_init},
+  
   // NCT 2x encoder inputs, 2x analog outputs, 2x tacho outputs
   { lcecSlaveTypeNCTTTLAC2, LCEC_NCT_VID, LCEC_NCTTTLAC2_PID, LCEC_NCTTTLAC2_PDOS, lcec_nctttlac2_init},
 
