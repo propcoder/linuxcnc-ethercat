@@ -131,9 +131,7 @@ typedef struct {
     *spindle_runs_reverse,
     *spindle_stop,
     *home_all, *homed,
-    *handwheel_mode,
-    *incr_mode,
-    *jog_mode,
+    *manual_mode, *is_manual,
     *mdi_mode, *is_mdi,
     *auto_mode, *is_auto,
     *edit,
@@ -154,7 +152,7 @@ typedef struct {
     *reset, *clear_faults, *key_switch;
   hal_float_t *increment, *normal_jog_speed, *rapid_jog_speed, *jog_speed;
   
-  hal_bit_t do_init, gear2_request_state;
+  hal_bit_t do_init, gear2_request_state, handwheel_mode, incr_mode, jog_mode;
   keys_leds_t k_old, leds;
   
   unsigned int leds_pdo_os;
@@ -182,9 +180,8 @@ static const lcec_pindesc_t slave_pins[] = {
   { HAL_BIT, HAL_OUT, offsetof(lcec_nctmk1x_data_t, spindle_stop), "%s.%s.%s.spindle-stop" },
   { HAL_BIT, HAL_OUT, offsetof(lcec_nctmk1x_data_t, home_all), "%s.%s.%s.home-all" },
   { HAL_BIT, HAL_IN, offsetof(lcec_nctmk1x_data_t, homed), "%s.%s.%s.homed" },
-  { HAL_BIT, HAL_OUT, offsetof(lcec_nctmk1x_data_t, handwheel_mode), "%s.%s.%s.handwheel-mode" },
-  { HAL_BIT, HAL_OUT, offsetof(lcec_nctmk1x_data_t, incr_mode), "%s.%s.%s.jog-mode-incr" },
-  { HAL_BIT, HAL_OUT, offsetof(lcec_nctmk1x_data_t, jog_mode), "%s.%s.%s.jog-mode-cont" },
+  { HAL_BIT, HAL_OUT, offsetof(lcec_nctmk1x_data_t, manual_mode), "%s.%s.%s.manual-mode" },
+  { HAL_BIT, HAL_IN, offsetof(lcec_nctmk1x_data_t, is_manual), "%s.%s.%s.is-manual" },
   { HAL_BIT, HAL_OUT, offsetof(lcec_nctmk1x_data_t, mdi_mode), "%s.%s.%s.mdi-mode" },
   { HAL_BIT, HAL_IN, offsetof(lcec_nctmk1x_data_t, is_mdi), "%s.%s.%s.is-mdi" },
   { HAL_BIT, HAL_OUT, offsetof(lcec_nctmk1x_data_t, auto_mode), "%s.%s.%s.auto-mode" },
@@ -340,6 +337,7 @@ int lcec_nctmk1x_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_reg_t 
 
   // initialize global data
   hal_data->do_init = true;
+  hal_data->jog_mode = true;
   
   // initialize PDO entries
   LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x3101, 0x01, &hal_data->leds_pdo_os, NULL);
@@ -408,7 +406,7 @@ void lcec_nctmk1x_read(struct lcec_slave *slave, long period) {
   *hal_data->nc_ready = EC_READ_BIT(&pd[hal_data->nc_ready_pdo_os], 0);
   // Handwheel increment
   b = 0b111 & EC_READ_U8(&pd[hal_data->axes[3].incr_pdo_os]);
-  if(*hal_data->handwheel_mode)
+  if(hal_data->handwheel_mode)
     *hal_data->hw_counts += EC_READ_S8(&pd[hal_data->hwmove_pdo_os]) * (b==4 ? 100 : (b==2 ? 10 : (b==1 ? 1 : 0)));
   // Axis selector
   b = EC_READ_U8(&pd[hal_data->axes[3].enable_pdo_os]);
@@ -433,32 +431,51 @@ void lcec_nctmk1x_read(struct lcec_slave *slave, long period) {
     }
     // Modes
     if(k.f.modes) {
-      *hal_data->auto_mode      = false;
-      *hal_data->mdi_mode       = false;
-      *hal_data->jog_mode       = false;
-      *hal_data->incr_mode      = false;
-      *hal_data->handwheel_mode = false;
       switch(k.f.modes) {
         case M_AUTO:
+          *hal_data->mdi_mode       =
+          *hal_data->manual_mode    = false;
           *hal_data->auto_mode      = true;
           break;
         case M_MDI:
+          *hal_data->auto_mode      =
+          *hal_data->manual_mode    = false;
           *hal_data->mdi_mode       = true;
           break;
         case M_JOG:
-          *hal_data->jog_mode       = true;
+          *hal_data->auto_mode      =
+          *hal_data->mdi_mode       =
+          hal_data->handwheel_mode  =
+          hal_data->incr_mode       = false;
+          hal_data->jog_mode        =
+          *hal_data->manual_mode    = true;
           break;
         case M_INCR:
         case M_INCR | M_JOG:
-          *hal_data->incr_mode      = true;
+          *hal_data->auto_mode      =
+          *hal_data->mdi_mode       =
+          hal_data->handwheel_mode  =
+          hal_data->jog_mode        = false;
+          hal_data->incr_mode       =
+          *hal_data->manual_mode    = true;
           break;
         case M_HW:
-          *hal_data->handwheel_mode = true;
+          *hal_data->auto_mode      =
+          *hal_data->mdi_mode       =
+          hal_data->jog_mode        =
+          hal_data->incr_mode       = false;
+          hal_data->handwheel_mode  =
+          *hal_data->manual_mode    = true;
+          break;
+        default:
+          *hal_data->mdi_mode       =
+          *hal_data->manual_mode    =
+          *hal_data->auto_mode      = false;
       }
     }
     *hal_data->edit ^= k.f.edit;
     k.f.jog_btns &= *hal_data->jog_mask;
-    if(*hal_data->incr_mode) {
+    if(hal_data->incr_mode) {
       *hal_data->axes[0].jog_minus  =
       *hal_data->axes[3].jog_plus   =
       *hal_data->axes[0].jog_plus   =
@@ -476,7 +493,7 @@ void lcec_nctmk1x_read(struct lcec_slave *slave, long period) {
       *hal_data->axes[3].incr_minus = k.f.jog.a_minus;
       *hal_data->axes[2].incr_plus  = k.f.jog.z_plus;
     }
-    else if(*hal_data->jog_mode) {
+    else if(hal_data->jog_mode) {
       *hal_data->axes[0].incr_minus =
       *hal_data->axes[3].incr_plus  =
       *hal_data->axes[0].incr_plus  =
@@ -593,14 +610,12 @@ void lcec_nctmk1x_write(struct lcec_slave *slave, long period) {
   hal_data->leds.f.spindle_forward = *hal_data->spindle_runs_forward;
   hal_data->leds.f.spindle_reverse = *hal_data->spindle_runs_reverse;
   hal_data->leds.f.spindle_stop    = !hal_data->leds.f.spindle_forward && !hal_data->leds.f.spindle_reverse;
-  hal_data->leds.f.jog_btns        = (*hal_data->incr_mode || *hal_data->jog_mode) ? *hal_data->jog_mask : 0;
+  hal_data->leds.f.jog_btns        = *hal_data->is_manual && (hal_data->incr_mode || hal_data->jog_mode) ? *hal_data->jog_mask : 0;
   hal_data->leds.f.home            = *hal_data->homed;
   hal_data->leds.f.modes =
-    *hal_data->handwheel_mode ? M_HW   : 0 |
-    *hal_data->incr_mode      ? M_INCR : 0 |
-    *hal_data->jog_mode       ? M_JOG  : 0 |
-    *hal_data->is_mdi         ? M_MDI  : 0 |
-    *hal_data->is_auto        ? M_AUTO : 0;
+    *hal_data->is_manual ? (hal_data->handwheel_mode ? M_HW : (hal_data->incr_mode ? M_INCR : M_JOG)) :
+    ( (*hal_data->is_mdi          ? M_MDI  : 0) |
+      (*hal_data->is_auto         ? M_AUTO : 0)  );
     hal_data->leds.f.edit          = *hal_data->edit;
 //   hal_data->leds.f.program_test    = *hal_data->program_test;
   hal_data->leds.f.motion_enable   = *hal_data->motion_enable;
@@ -610,7 +625,7 @@ void lcec_nctmk1x_write(struct lcec_slave *slave, long period) {
   hal_data->leds.f.optional_stop   = *hal_data->optional_stop_is_on;
   hal_data->leds.f.block_delete    = *hal_data->block_delete_is_on;
   hal_data->leds.f.step            = *hal_data->running;
-  if(*hal_data->incr_mode) {
+  if(hal_data->incr_mode) {
     i = round(*hal_data->increment * 1000);
     hal_data->leds.f.incr_btns       = (i == 1000) ? 8 : ((i == 100) ? 4 : ((i == 10) ? 2 : 1));
   }
@@ -623,7 +638,7 @@ void lcec_nctmk1x_write(struct lcec_slave *slave, long period) {
   hal_data->leds.f.s_over_plus     = *hal_data->s_over_counts > 10;
   hal_data->leds.f.s_over_none     = *hal_data->s_over_counts == 10;
   hal_data->leds.f.s_over_minus    = *hal_data->s_over_counts < 10;
-  hal_data->leds.f.jog_rapid       = *hal_data->jog_mode && hal_data->leds.f.jog_btns;
+  hal_data->leds.f.jog_rapid       = *hal_data->is_manual && hal_data->jog_mode && hal_data->leds.f.jog_btns;
   hal_data->leds.f.machine_on      = *hal_data->machine_is_on;
   hal_data->leds.f.fork_ccw        = *hal_data->fork_is_ccw;
   hal_data->leds.f.tool_release    = *hal_data->tool_released;
