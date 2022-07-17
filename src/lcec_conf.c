@@ -221,6 +221,9 @@ static const LCEC_CONF_TYPELIST_T slaveTypes[] = {
 
   // modusoft PH3LM2RM converter
   { "Ph3LM2RM", lcecSlaveTypePh3LM2RM, NULL },
+  
+  // Panasonic Minas A6B series
+  { "PanA6B", lcecSlaveTypePanA6B, NULL },
 
   { NULL }
 };

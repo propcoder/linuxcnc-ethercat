@@ -57,12 +57,13 @@ do {                        \
 #define LCEC_MSG_PFX "LCEC: "
 
 // vendor ids
-#define LCEC_BECKHOFF_VID 0x00000002
-#define LCEC_STOEBER_VID  0x000000b9
-#define LCEC_DELTA_VID    0x000001dd
-#define LCEC_MODUSOFT_VID 0x00000907
-#define LCEC_NCT_VID      0x0000052E
-#define LCEC_OMRON_VID    0x00000083
+#define LCEC_BECKHOFF_VID  0x00000002
+#define LCEC_STOEBER_VID   0x000000b9
+#define LCEC_DELTA_VID     0x000001dd
+#define LCEC_MODUSOFT_VID  0x00000907
+#define LCEC_NCT_VID       0x0000052E
+#define LCEC_OMRON_VID     0x00000083
+#define LCEC_PANASONIC_VID 0x0000066f
 
 // State update period (ns)
 #define LCEC_STATE_UPDATE_PERIOD 1000000000LL

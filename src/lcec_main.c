@@ -54,6 +54,7 @@
 #include "lcec_deasda.h"
 #include "lcec_omrg5.h"
 #include "lcec_ph3lm2rm.h"
+#include "lcec_pana6b.h"
 
 #include "rtapi_app.h"
 
@@ -225,6 +226,9 @@ static const lcec_typelist_t types[] = {
   // modusoft PH3LM2RM converter
   { lcecSlaveTypePh3LM2RM, LCEC_PH3LM2RM_VID, LCEC_PH3LM2RM_PID, LCEC_PH3LM2RM_PDOS, lcec_ph3lm2rm_init},
 
+  // Panasonic Minas A6B series
+  { lcecSlaveTypePanA6B, LCEC_PANA6B_VID, LCEC_PANA6B_PID, LCEC_PANA6B_PDOS, lcec_pana6b_init},
+  
   { lcecSlaveTypeInvalid }
 };
 
