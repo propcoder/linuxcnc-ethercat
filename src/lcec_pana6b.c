@@ -88,7 +88,7 @@ static const lcec_pindesc_t slave_pins[] = {
   { HAL_FLOAT, HAL_IN, offsetof(lcec_pana6b_data_t, pos_cmd), "%s.%s.%s.pos-cmd" },
   { HAL_FLOAT, HAL_OUT, offsetof(lcec_pana6b_data_t, pos_ferr), "%s.%s.%s.pos-ferr" },
   { HAL_BIT, HAL_OUT, offsetof(lcec_pana6b_data_t, fault), "%s.%s.%s.fault" },
-  { HAL_BIT, HAL_OUT, offsetof(lcec_pana6b_data_t, fault_reset), "%s.%s.%s.fault-reset" },
+  { HAL_BIT, HAL_IN, offsetof(lcec_pana6b_data_t, fault_reset), "%s.%s.%s.fault-reset" },
   { HAL_BIT, HAL_IN, offsetof(lcec_pana6b_data_t, enable), "%s.%s.%s.enable" },
   { HAL_BIT, HAL_OUT, offsetof(lcec_pana6b_data_t, stat_switchon_ready), "%s.%s.%s.stat-switchon-ready" },
   { HAL_BIT, HAL_OUT, offsetof(lcec_pana6b_data_t, stat_switched_on), "%s.%s.%s.stat-switched-on" },
@@ -317,30 +317,34 @@ void lcec_pana6b_write(struct lcec_slave *slave, long period) {
   int enable_edge;
   uint16_t control;
   int64_t pos64;
+  uint32_t pos_cnt;
 
   // detect enable edge
   enable_edge = *(hal_data->enable) && !hal_data->enable_old;
   hal_data->enable_old = *(hal_data->enable);
-
+  
   // write control register
-  control = 0;
-  if (*(hal_data->stat_fault)) {
-    if (*(hal_data->fault_reset)) {
+  control = (1 << 1) | // enable voltage
+            (1 << 2); // disable quick stop
+  
+  // NOTE: A workaround to fix wrong position command  - read position feedback here also
+  pos_cnt = EC_READ_S32(&pd[hal_data->curr_pos_pdo_os]);
+  class_enc_update(&hal_data->enc, hal_data->pprev, hal_data->pos_scale, pos_cnt, 0, 0);
+  
+  if(*(hal_data->stat_fault)) {
+    if(*(hal_data->fault_reset)) {
       control |= (1 << 7); // fault reset
     }
-    if (hal_data->auto_fault_reset && enable_edge) {
+    if(hal_data->auto_fault_reset && enable_edge) {
       hal_data->auto_fault_reset_delay = PANA6B_FAULT_AUTORESET_DELAY_NS;
       control |= (1 << 7); // fault reset
     }
   } else {
-    if (*(hal_data->enable)) {
-      control |= (1 << 2); // disable quick stop
-      control |= (1 << 1); // enable voltage
+    if(*(hal_data->enable)) {
       if (*(hal_data->stat_switchon_ready)) {
         control |= (1 << 0); // switch on
         if (*(hal_data->stat_switched_on)) {
           control |= (1 << 3); // enable op
-          control |= (1 << 9); // change on set-point
         }
       }
     }
